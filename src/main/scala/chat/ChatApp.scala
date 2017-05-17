@@ -22,7 +22,8 @@ object ChatApp extends App {
         val word = CacheHandler.inputChars.mkString
         println("[" + username + "] " + word)
         CacheHandler.insertCache(word)
-      case char: Char => CacheHandler.inputChars += char
+      case ch: Char =>
+        CacheHandler.checkCharacter(ch)
     }
   }
 
@@ -35,6 +36,21 @@ object CacheHandler {
   def insertCache(word: String) = {
     val firstChar = word.head
     Cache.put(firstChar, word)
+    inputChars.clear()
+  }
+
+  def checkCharacter(ch: Char) = {
+    val size = inputChars.size
+
+    if(size == 0) {
+      val wordList = Cache.get(ch)
+      wordList.zipWithIndex.foreach { case (word, index) =>
+        print((index + 1) + ": " + word + ", ")
+      }
+
+    }
+
+    inputChars += ch
   }
 
 }
