@@ -9,7 +9,7 @@ import scala.collection.Set
 
 object Cache {
 
-  var alphabetValueMap = new mutable.HashMap[Char, mutable.HashMap[String, String]]
+  var alphabetValueMap = new mutable.HashMap[Char, mutable.LinkedHashSet[String]]
   val alphabetCountMap = new mutable.HashMap[Char, mutable.HashMap[String, Int]]
   val alphabetOrderMap = new mutable.HashMap[Char, mutable.HashMap[Int, mutable.LinkedHashSet[String]]]
 
@@ -17,35 +17,35 @@ object Cache {
   var min = -1
 
   def get(alphabet: Char, key: String): Set[String] = {
-    val valueMap = getCollectionByAlphabet(alphabet)._1
+    val valueSet = getCollectionByAlphabet(alphabet)._1
 
-    return valueMap.keySet
+    return valueSet
   }
 
-  def put(alphabet: Char, key: String, value: String): Unit = {
-    val (valueMap, countMap, orderMap) = getCollectionByAlphabet(alphabet)
+  def put(alphabet: Char, value: String): Unit = {
+    val (valueSet, countMap, orderMap) = getCollectionByAlphabet(alphabet)
 
-    if (valueMap.contains(key)) {
-      valueMap += (key -> value)
-      arrange(alphabet, key)
-
+    if (valueSet.contains(value)) {
+      arrange(alphabet, value)
       return
     }
 
-    if (valueMap.size >= capacity) {
+    if (valueSet.size >= capacity) {
       val removedKey = orderMap.get(min).get.head
       orderMap.get(min).get -= (removedKey)
-      valueMap -= (removedKey)
+      valueSet -= (removedKey)
     }
 
-    valueMap += (key -> value)
-    countMap += (key -> 1)
+    valueSet += (value)
+    countMap += (value -> 1)
     min = 1
-    orderMap.get(min).get += (key)
+    orderMap.get(min).get += (value)
   }
 
-  def arrange(alphabet: Char, key: String): String = {
-    val (valueMap, countMap, orderMap) = getCollectionByAlphabet(alphabet)
+  def arrange(alphabet: Char, key: String) = {
+    val collections = getCollectionByAlphabet(alphabet)
+    val countMap = collections._2
+    val orderMap = collections._3
 
     val count = countMap.get(key).getOrElse(0)
     countMap += (key -> (count + 1))
@@ -59,20 +59,18 @@ object Cache {
       orderMap += ((count + 1) -> new mutable.LinkedHashSet[String])
 
     orderMap.get(count + 1).get += (key)
-
-    return valueMap.get(key).get
   }
 
   def getCollectionByAlphabet(alphabet: Char): (
-      mutable.HashMap[String, String],
+      mutable.LinkedHashSet[String],
       mutable.HashMap[String, Int],
       mutable.HashMap[Int, mutable.LinkedHashSet[String]]) = {
 
-    val valueMap = alphabetValueMap.get(alphabet).getOrElse(new mutable.HashMap[String, String])
+    val valueSet = alphabetValueMap.get(alphabet).getOrElse(new mutable.LinkedHashSet[String])
     val countMap = alphabetCountMap.get(alphabet).getOrElse(new mutable.HashMap[String, Int])
     val orderMap = alphabetOrderMap.get(alphabet).getOrElse(new mutable.HashMap[Int, mutable.LinkedHashSet[String]])
 
-    return (valueMap, countMap, orderMap)
+    return (valueSet, countMap, orderMap)
   }
 
 }
